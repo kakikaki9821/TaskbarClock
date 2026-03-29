@@ -16,6 +16,8 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "theme": "auto",
     "auto_start": False,
     "window_opacity": 0.95,
+    "clock_size": "medium",  # "small", "medium", "large", "xlarge"
+    "clock_position": None,  # [x, y] or None for auto
 }
 
 

@@ -6,8 +6,16 @@ from datetime import datetime
 
 from loguru import logger
 from PySide6.QtCore import QPoint, Qt, QTimer, Signal
-from PySide6.QtGui import QColor, QFont, QMouseEvent, QPainter
-from PySide6.QtWidgets import QApplication, QWidget
+from PySide6.QtGui import QAction, QActionGroup, QColor, QFont, QMouseEvent, QPainter
+from PySide6.QtWidgets import QApplication, QMenu, QWidget
+
+# Size presets: (width, height, font_size)
+SIZE_PRESETS: dict[str, tuple[int, int, int]] = {
+    "small": (60, 24, 10),
+    "medium": (80, 32, 14),
+    "large": (110, 40, 18),
+    "xlarge": (140, 50, 24),
+}
 
 
 class TaskbarClockWidget(QWidget):
@@ -17,11 +25,9 @@ class TaskbarClockWidget(QWidget):
     alarm_requested = Signal()
     timer_requested = Signal()
     quit_requested = Signal()
+    size_changed = Signal(str)  # size preset name
 
-    WIDGET_WIDTH = 80
-    WIDGET_HEIGHT = 32
-
-    def __init__(self) -> None:
+    def __init__(self, size_preset: str = "medium") -> None:
         super().__init__()
 
         self.setWindowFlags(
@@ -30,12 +36,16 @@ class TaskbarClockWidget(QWidget):
             | Qt.WindowType.Tool
         )
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
-        self.setFixedSize(self.WIDGET_WIDTH, self.WIDGET_HEIGHT)
         self.setAccessibleName("タスクバー時計")
 
         # Theme colors
         self._bg_color = QColor(0, 0, 0, 180)
         self._text_color = QColor(255, 255, 255)
+
+        # Size
+        self._size_preset = ""
+        self._font_size = 14
+        self.set_size_preset(size_preset)
 
         # Drag state
         self._drag_pos: QPoint | None = None
@@ -54,7 +64,29 @@ class TaskbarClockWidget(QWidget):
         self._timer.start()
 
         self._update_time()
-        logger.info("TaskbarClockWidget initialized")
+        logger.info("TaskbarClockWidget initialized (size={})", size_preset)
+
+    def set_size_preset(self, preset: str) -> None:
+        """Change the widget size. Preset: 'small', 'medium', 'large', 'xlarge'."""
+        if preset not in SIZE_PRESETS:
+            preset = "medium"
+        if preset == self._size_preset:
+            return
+        self._size_preset = preset
+        w, h, fs = SIZE_PRESETS[preset]
+        self._font_size = fs
+        self.setFixedSize(w, h)
+        self.update()
+        logger.debug("Clock size changed to: {} ({}x{}, font {})", preset, w, h, fs)
+
+    @property
+    def size_preset(self) -> str:
+        """Current size preset name."""
+        return self._size_preset
+
+    def set_position(self, x: int, y: int) -> None:
+        """Set widget position (for restoring saved position)."""
+        self.move(x, y)
 
     def _position_on_taskbar(self) -> None:
         """Position widget on the taskbar area (bottom-right, left of system tray)."""
@@ -64,14 +96,12 @@ class TaskbarClockWidget(QWidget):
         screen_geo = screen.geometry()
         available = screen.availableGeometry()
 
-        # Taskbar height = screen height - available height
         taskbar_height = screen_geo.height() - available.height()
         if taskbar_height < 20:
-            taskbar_height = 40  # Fallback
+            taskbar_height = 40
 
-        # Position: bottom-right, offset left from edge to sit near system tray
-        x = available.right() - self.WIDGET_WIDTH - 200
-        y = screen_geo.bottom() - taskbar_height + (taskbar_height - self.WIDGET_HEIGHT) // 2
+        x = available.right() - self.width() - 200
+        y = screen_geo.bottom() - taskbar_height + (taskbar_height - self.height()) // 2
 
         self.move(x, y)
 
@@ -101,14 +131,12 @@ class TaskbarClockWidget(QWidget):
         try:
             painter.setRenderHint(QPainter.RenderHint.Antialiasing)
 
-            # Rounded background
             painter.setBrush(self._bg_color)
             painter.setPen(Qt.PenStyle.NoPen)
             painter.drawRoundedRect(self.rect(), 6, 6)
 
-            # Time text
             painter.setPen(self._text_color)
-            font = QFont("Segoe UI", 14, QFont.Weight.Bold)
+            font = QFont("Segoe UI", self._font_size, QFont.Weight.Bold)
             painter.setFont(font)
             painter.drawText(self.rect(), Qt.AlignmentFlag.AlignCenter, self._time_text)
         finally:
@@ -142,11 +170,29 @@ class TaskbarClockWidget(QWidget):
             event.accept()
 
     def _show_context_menu(self, pos: QPoint) -> None:
-        """Show right-click menu."""
-        from PySide6.QtGui import QAction
-        from PySide6.QtWidgets import QMenu
-
+        """Show right-click menu with size options."""
         menu = QMenu()
+
+        # Size submenu
+        size_menu = menu.addMenu("サイズ")
+        size_group = QActionGroup(size_menu)
+        size_group.setExclusive(True)
+
+        size_labels = {
+            "small": "小",
+            "medium": "中",
+            "large": "大",
+            "xlarge": "特大",
+        }
+        for key, label in size_labels.items():
+            action = QAction(label, size_menu)
+            action.setCheckable(True)
+            action.setChecked(key == self._size_preset)
+            action.triggered.connect(lambda checked, k=key: self._on_size_selected(k))
+            size_group.addAction(action)
+            size_menu.addAction(action)
+
+        menu.addSeparator()
 
         alarm_action = QAction("アラーム設定", menu)
         alarm_action.triggered.connect(self.alarm_requested.emit)
@@ -163,3 +209,8 @@ class TaskbarClockWidget(QWidget):
         menu.addAction(quit_action)
 
         menu.exec(pos)
+
+    def _on_size_selected(self, preset: str) -> None:
+        """Handle size selection from menu."""
+        self.set_size_preset(preset)
+        self.size_changed.emit(preset)

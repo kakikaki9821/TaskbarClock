@@ -92,8 +92,15 @@ def main() -> int:
     # 12b. Taskbar Clock Widget (always-visible floating clock)
     from ui.taskbar_clock_widget import TaskbarClockWidget
 
-    clock_widget = TaskbarClockWidget()
+    clock_size = config.get("clock_size", "medium")
+    clock_widget = TaskbarClockWidget(size_preset=clock_size)
     clock_widget.update_colors(is_dark)
+
+    # Restore saved position
+    saved_pos = config.get("clock_position")
+    if saved_pos and isinstance(saved_pos, list) and len(saved_pos) == 2:
+        clock_widget.set_position(saved_pos[0], saved_pos[1])
+
     clock_widget.show()
 
     # 13. Analog Clock
@@ -153,6 +160,7 @@ def main() -> int:
     clock_widget.alarm_requested.connect(show_alarm_dialog)
     clock_widget.timer_requested.connect(show_timer_dialog)
     clock_widget.quit_requested.connect(app.quit)
+    clock_widget.size_changed.connect(lambda s: config.set("clock_size", s))
 
     # Alarm check timer (every 1 second)
     alarm_check_timer = QTimer()
@@ -187,6 +195,10 @@ def main() -> int:
     # --- Run ---
     logger.info("TaskbarClock ready")
     exit_code = app.exec()
+
+    # Save clock widget position before exit
+    pos = clock_widget.pos()
+    config.set("clock_position", [pos.x(), pos.y()])
 
     # Cleanup
     config.save_immediate()
