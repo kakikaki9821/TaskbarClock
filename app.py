@@ -89,6 +89,13 @@ def main() -> int:
     tray_icon = TrayIcon(renderer)
     tray_icon.show()
 
+    # 12b. Taskbar Clock Widget (always-visible floating clock)
+    from ui.taskbar_clock_widget import TaskbarClockWidget
+
+    clock_widget = TaskbarClockWidget()
+    clock_widget.update_colors(is_dark)
+    clock_widget.show()
+
     # 13. Analog Clock
     from ui.analog_clock import AnalogClock
 
@@ -141,6 +148,12 @@ def main() -> int:
     tray_icon.timer_requested.connect(show_timer_dialog)
     tray_icon.quit_requested.connect(app.quit)
 
+    # Taskbar clock widget signals
+    clock_widget.left_clicked.connect(lambda: analog_clock.toggle_at_tray())
+    clock_widget.alarm_requested.connect(show_alarm_dialog)
+    clock_widget.timer_requested.connect(show_timer_dialog)
+    clock_widget.quit_requested.connect(app.quit)
+
     # Alarm check timer (every 1 second)
     alarm_check_timer = QTimer()
 
@@ -164,9 +177,10 @@ def main() -> int:
     def on_timer_tick(remaining_ms: int) -> None:
         tray_icon.update_tooltip_text(f"タイマー: {timer_manager.format_remaining()}")
 
-    # Theme change → renderer colors
+    # Theme change → renderer colors + clock widget
     def on_theme_changed(dark: bool) -> None:
         renderer.update_colors(dark)
+        clock_widget.update_colors(dark)
 
     theme_manager._on_theme_changed = on_theme_changed
 
