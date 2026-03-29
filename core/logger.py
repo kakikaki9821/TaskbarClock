@@ -10,12 +10,13 @@ def setup_logger(log_dir: Path | None = None) -> None:
     """Initialize Loguru with file rotation and Sentry integration."""
     logger.remove()  # Remove default handler
 
-    # Console output (DEBUG+)
-    logger.add(
-        sys.stderr,
-        level="DEBUG",
-        format="<green>{time:HH:mm:ss}</green> | <level>{level:<8}</level> | {message}",
-    )
+    # Console output (DEBUG+) — only if stderr is available (not in --windowed exe)
+    if sys.stderr is not None:
+        logger.add(
+            sys.stderr,
+            level="DEBUG",
+            format="<green>{time:HH:mm:ss}</green> | <level>{level:<8}</level> | {message}",
+        )
 
     # File output (INFO+, rotation at 500MB)
     if log_dir is None:
