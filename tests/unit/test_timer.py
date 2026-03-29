@@ -34,8 +34,8 @@ class TestTimerManager:
         assert timer_manager.state == TimerState.IDLE
 
     def test_countdown_reaches_zero(self, timer_manager: TimerManager) -> None:
-        finished = []
-        timer_manager._on_finished = lambda: finished.append(True)
+        finished: list[bool] = []
+        timer_manager.on_finished(lambda: finished.append(True))
         timer_manager.start(1000)
         timer_manager.tick(500)
         assert timer_manager.state == TimerState.RUNNING
@@ -45,7 +45,8 @@ class TestTimerManager:
 
     def test_tick_emits_remaining_ms(self) -> None:
         ticks: list[int] = []
-        mgr = TimerManager(on_tick=lambda ms: ticks.append(ms))
+        mgr = TimerManager()
+        mgr.on_tick(lambda ms: ticks.append(ms))
         mgr.start(5000)
         mgr.tick(1000)
         mgr.tick(1000)
@@ -78,7 +79,8 @@ class TestTimerManager:
 
     def test_state_changed_callback(self) -> None:
         states: list[TimerState] = []
-        mgr = TimerManager(on_state_changed=lambda s: states.append(s))
+        mgr = TimerManager()
+        mgr.on_state_changed(lambda s: states.append(s))
         mgr.start(1000)
         mgr.pause()
         mgr.resume()
@@ -98,3 +100,30 @@ class TestTimerManager:
         timer_manager.start(500)
         timer_manager.tick(1000)
         assert timer_manager.remaining_ms == 0
+
+    def test_multiple_tick_listeners(self) -> None:
+        ticks_a: list[int] = []
+        ticks_b: list[int] = []
+        mgr = TimerManager()
+        mgr.on_tick(lambda ms: ticks_a.append(ms))
+        mgr.on_tick(lambda ms: ticks_b.append(ms))
+        mgr.start(5000)
+        mgr.tick(1000)
+        assert ticks_a == [4000]
+        assert ticks_b == [4000]
+
+    def test_remove_tick_listener(self) -> None:
+        ticks: list[int] = []
+        cb = lambda ms: ticks.append(ms)  # noqa: E731
+        mgr = TimerManager()
+        mgr.on_tick(cb)
+        mgr.start(5000)
+        mgr.tick(1000)
+        mgr.remove_tick_listener(cb)
+        mgr.tick(1000)
+        assert ticks == [4000]  # Only first tick recorded
+
+    def test_remove_nonexistent_listener(self, timer_manager: TimerManager) -> None:
+        # Should not raise
+        timer_manager.remove_tick_listener(lambda ms: None)
+        timer_manager.remove_state_listener(lambda s: None)

@@ -1,53 +1,60 @@
 # TaskbarClock
 
-Windows 11 のシステムトレイに常駐するデジタル時計アプリ。
+[![CI](https://github.com/kakikaki9821/TaskbarClock/actions/workflows/ci.yml/badge.svg)](https://github.com/kakikaki9821/TaskbarClock/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+
+Windows 11 のタスクバーに常時表示されるデジタル時計アプリ。
 
 ## 機能
 
-- **デジタル時計** — システムトレイにHH:MM表示
-- **アナログ時計** — マウスホバーでポップアップ表示
-- **目覚まし** — 複数登録、曜日繰り返し、スヌーズ
-- **タイマー** — カウントダウン、プリセット付き
+- **常時表示時計** — タスクバー上にHH:MM表示（ドラッグ移動・サイズ変更可能）
+- **アナログ時計** — クリックでポップアップ表示（60fps秒針）
+- **目覚まし** — 複数登録、曜日繰り返し、スヌーズ5分、トースト通知
+- **タイマー** — カウントダウン、プリセット（1/3/5/10/30分）
 - **テーマ** — Windows 11 ダーク/ライトモード自動対応
-
-## 必要環境
-
-- Windows 11
-- Python 3.10+
-
-## インストール
-
-```bash
-pip install -r requirements.txt
-```
 
 ## 使い方
 
+### exeで実行（推奨）
+[Releases](https://github.com/kakikaki9821/TaskbarClock/releases)からTaskbarClock.exeをダウンロードして実行。
+
+### Pythonで実行
 ```bash
+pip install -r requirements.txt
 python app.py
 ```
 
-システムトレイに時計アイコンが表示されます。
+### 操作方法
+- **左クリック** — アナログ時計の表示/非表示
+- **右クリック** — メニュー（サイズ変更 / アラーム / タイマー / 終了）
+- **ドラッグ** — 時計の位置を移動
 
-- **マウスホバー** — アナログ時計をポップアップ表示
-- **右クリック** — アラーム設定 / タイマー / 設定 / 終了
+サイズと位置は自動保存され、次回起動時に復元されます。
 
 ## 開発
 
 ```bash
 pip install -r requirements.txt -r requirements-dev.txt
 
-# テスト
-pytest
+pytest                        # テスト実行
+ruff check .                  # リント
+ruff format .                 # フォーマット
+mypy clock/ core/             # 型チェック
+```
 
-# リント
-ruff check .
+### アーキテクチャ
+```
+clock/      純粋ビジネスロジック（Qt非依存）
+core/       基盤サービス（設定・ログ・クラッシュレポート）
+services/   外部I/O（サウンド・通知）
+ui/         全UI要素（PySide6）
+tests/      unit / integration / e2e
+```
 
-# 型チェック
-mypy clock/ core/
-
-# exe化
-pyinstaller --onefile --windowed --icon=resources/icon.ico app.py
+### ビルド（Windows上で実行）
+```bash
+pyinstaller --onefile --windowed --name=TaskbarClock --add-data "resources;resources" app.py
 ```
 
 ## ライセンス

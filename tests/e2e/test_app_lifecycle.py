@@ -83,7 +83,8 @@ class TestAppLifecycle:
         assert len(triggered) == 1
 
         finished: list[bool] = []
-        timer_mgr = TimerManager(on_finished=lambda: finished.append(True))
+        timer_mgr = TimerManager()
+        timer_mgr.on_finished(lambda: finished.append(True))
         timer_mgr.start(5000)
         timer_mgr.tick(3000)
         assert timer_mgr.state == TimerState.RUNNING

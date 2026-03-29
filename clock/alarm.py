@@ -21,6 +21,15 @@ class Alarm:
     label: str = ""
     snooze_until: datetime | None = None
 
+    def __post_init__(self) -> None:
+        """Validate alarm fields."""
+        if not (0 <= self.hour <= 23):
+            raise ValueError(f"hour must be 0-23, got {self.hour}")
+        if not (0 <= self.minute <= 59):
+            raise ValueError(f"minute must be 0-59, got {self.minute}")
+        if not all(0 <= d <= 6 for d in self.days):
+            raise ValueError(f"days must be 0-6 (Mon-Sun), got {self.days}")
+
     def matches(self, now: datetime) -> bool:
         """Check if this alarm should fire at the given time."""
         if not self.enabled:
@@ -71,6 +80,15 @@ class AlarmManager:
         self._on_triggered = on_triggered
         self._on_changed = on_changed
         self._last_trigger_minute: tuple[int, int] = (-1, -1)
+
+    @property
+    def on_changed(self) -> Callable[[], None] | None:
+        """Callback invoked when alarms are added/removed/updated."""
+        return self._on_changed
+
+    @on_changed.setter
+    def on_changed(self, callback: Callable[[], None] | None) -> None:
+        self._on_changed = callback
 
     @property
     def alarms(self) -> list[Alarm]:

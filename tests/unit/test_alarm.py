@@ -2,6 +2,8 @@
 
 from datetime import datetime
 
+import pytest
+
 from clock.alarm import Alarm, AlarmManager
 from tests.conftest import FakeClock
 
@@ -58,6 +60,22 @@ class TestAlarm:
         a1 = Alarm(hour=7, minute=0)
         a2 = Alarm(hour=7, minute=0)
         assert a1.id != a2.id
+
+    def test_invalid_hour_raises(self) -> None:
+        with pytest.raises(ValueError, match="hour must be 0-23"):
+            Alarm(hour=25, minute=0)
+
+    def test_invalid_minute_raises(self) -> None:
+        with pytest.raises(ValueError, match="minute must be 0-59"):
+            Alarm(hour=7, minute=60)
+
+    def test_invalid_day_raises(self) -> None:
+        with pytest.raises(ValueError, match="days must be 0-6"):
+            Alarm(hour=7, minute=0, days=[7])
+
+    def test_boundary_values_valid(self) -> None:
+        Alarm(hour=0, minute=0, days=[0])
+        Alarm(hour=23, minute=59, days=[6])
 
 
 class TestAlarmManager:

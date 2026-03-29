@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from PySide6.QtCore import QTime, Signal
+from PySide6.QtCore import Qt, QTime, Signal
 from PySide6.QtWidgets import (
     QCheckBox,
     QDialog,
@@ -98,7 +98,7 @@ class AlarmDialog(QDialog):
         item = self._list.currentItem()
         if item is None:
             return
-        alarm_id = item.data(256)  # Qt.ItemDataRole.UserRole
+        alarm_id = item.data(Qt.ItemDataRole.UserRole)  # Qt.ItemDataRole.UserRole
         if alarm_id and alarm_id in self._alarms:
             del self._alarms[alarm_id]
             self.alarm_removed.emit(alarm_id)
@@ -108,7 +108,7 @@ class AlarmDialog(QDialog):
         item = self._list.currentItem()
         if item is None:
             return
-        alarm_id = item.data(256)
+        alarm_id = item.data(Qt.ItemDataRole.UserRole)
         if alarm_id and alarm_id in self._alarms:
             alarm = self._alarms[alarm_id]
             alarm.enabled = not alarm.enabled
@@ -124,5 +124,5 @@ class AlarmDialog(QDialog):
             if alarm.label:
                 text += f" - {alarm.label}"
             item = QListWidgetItem(text)
-            item.setData(256, alarm.id)
+            item.setData(Qt.ItemDataRole.UserRole, alarm.id)
             self._list.addItem(item)
