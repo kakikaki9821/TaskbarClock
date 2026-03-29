@@ -127,6 +127,20 @@ class ApplicationController:
         self._tray_icon.alarm_requested.connect(self._show_alarm_dialog)
         self._tray_icon.timer_requested.connect(self._show_timer_dialog)
         self._tray_icon.quit_requested.connect(self._app.quit)
+        self._tray_icon.set_current_size(self._config.get("clock_size", "medium"))
+        self._tray_icon.set_current_style(self._config.get("clock_style", "default"))
+
+        # Tray icon size/style → clock widget sync
+        def on_tray_size(s: str) -> None:
+            self._clock_widget.set_size_preset(s)
+            self._config.set("clock_size", s)
+
+        def on_tray_style(s: str) -> None:
+            self._clock_widget.set_style(s)
+            self._config.set("clock_style", s)
+
+        self._tray_icon.size_changed.connect(on_tray_size)
+        self._tray_icon.style_changed.connect(on_tray_style)
 
         # Floating clock widget
         self._clock_widget.left_clicked.connect(lambda: self._analog_clock.toggle_at_tray())
