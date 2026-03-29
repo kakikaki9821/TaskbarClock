@@ -27,10 +27,12 @@ class FakeClock:
 
     def advance_seconds(self, seconds: int) -> None:
         from datetime import timedelta
+
         self._now += timedelta(seconds=seconds)
 
     def advance_minutes(self, minutes: int) -> None:
         from datetime import timedelta
+
         self._now += timedelta(minutes=minutes)
 
 

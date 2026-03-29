@@ -58,7 +58,9 @@ class TestConfig:
     def test_alarm_persistence(self, tmp_path: Path) -> None:
         config_path = tmp_path / "config.json"
         config = Config(path=config_path)
-        alarms = [{"id": "test1", "hour": 7, "minute": 0, "days": [0, 1], "enabled": True, "label": ""}]
+        alarms = [
+            {"id": "test1", "hour": 7, "minute": 0, "days": [0, 1], "enabled": True, "label": ""}
+        ]
         config.set("alarms", alarms)
         config.save_immediate()
 

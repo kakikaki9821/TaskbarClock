@@ -23,6 +23,7 @@ def main() -> int:
     setup_logger()
 
     from loguru import logger
+
     logger.info("TaskbarClock starting...")
 
     # 2. Config
@@ -102,6 +103,7 @@ def main() -> int:
     # Tray icon activation → analog clock toggle
     def on_tray_activated(reason: object) -> None:
         from PySide6.QtWidgets import QSystemTrayIcon
+
         if reason == QSystemTrayIcon.ActivationReason.Trigger:
             analog_clock.toggle_at_tray(tray_icon.geometry())
 

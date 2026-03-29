@@ -61,9 +61,7 @@ class Config:
     def _write_atomic(self) -> None:
         """Write config atomically: write to temp file, then rename."""
         try:
-            fd, tmp_path = tempfile.mkstemp(
-                dir=self._path.parent, suffix=".tmp", prefix="config_"
-            )
+            fd, tmp_path = tempfile.mkstemp(dir=self._path.parent, suffix=".tmp", prefix="config_")
             with open(fd, "w", encoding="utf-8") as f:
                 json.dump(self._data, f, indent=2, ensure_ascii=False)
 

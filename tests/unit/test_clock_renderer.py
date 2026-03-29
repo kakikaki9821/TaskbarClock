@@ -1,6 +1,5 @@
 """Unit tests for clock rendering angle calculations."""
 
-
 from ui.clock_renderer import hour_hand_angle, minute_hand_angle, second_hand_angle
 
 

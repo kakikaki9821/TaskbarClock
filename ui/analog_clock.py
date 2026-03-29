@@ -116,8 +116,12 @@ class AnalogClock(QWidget):
             # Rounded rectangle clip + background
             path = QPainterPath()
             path.addRoundedRect(
-                0.0, 0.0, float(self.width()), float(self.height()),
-                self.CORNER_RADIUS, self.CORNER_RADIUS,
+                0.0,
+                0.0,
+                float(self.width()),
+                float(self.height()),
+                self.CORNER_RADIUS,
+                self.CORNER_RADIUS,
             )
             painter.setClipPath(path)
 
@@ -128,13 +132,9 @@ class AnalogClock(QWidget):
 
             # Draw clock
             now = datetime.now()
-            self._renderer.render_analog(
-                painter, self.rect(), now, smooth_seconds=True
-            )
+            self._renderer.render_analog(painter, self.rect(), now, smooth_seconds=True)
 
             # Update accessibility description
-            self.setAccessibleDescription(
-                f"現在時刻: {now.hour}時{now.minute}分{now.second}秒"
-            )
+            self.setAccessibleDescription(f"現在時刻: {now.hour}時{now.minute}分{now.second}秒")
         finally:
             painter.end()
