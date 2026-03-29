@@ -95,7 +95,8 @@ class ApplicationController:
         from ui.taskbar_clock_widget import TaskbarClockWidget
 
         clock_size = config.get("clock_size", "medium")
-        self._clock_widget = TaskbarClockWidget(size_preset=clock_size)
+        clock_style = config.get("clock_style", "default")
+        self._clock_widget = TaskbarClockWidget(size_preset=clock_size, style_name=clock_style)
         self._clock_widget.update_colors(is_dark)
         saved_pos = config.get("clock_position")
         if saved_pos and isinstance(saved_pos, list) and len(saved_pos) == 2:
@@ -133,6 +134,7 @@ class ApplicationController:
         self._clock_widget.timer_requested.connect(self._show_timer_dialog)
         self._clock_widget.quit_requested.connect(self._app.quit)
         self._clock_widget.size_changed.connect(lambda s: self._config.set("clock_size", s))
+        self._clock_widget.style_changed.connect(lambda s: self._config.set("clock_style", s))
 
     def _on_tray_activated(self, reason: object) -> None:
         from PySide6.QtWidgets import QSystemTrayIcon
