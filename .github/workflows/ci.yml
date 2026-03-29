@@ -1,0 +1,60 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install ruff mypy
+      - run: ruff check .
+      - run: ruff format --check .
+      - run: mypy clock/ core/ --ignore-missing-imports
+
+  test:
+    needs: lint
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install -r requirements.txt -r requirements-dev.txt
+      - run: pytest tests/unit/ -v --tb=short --cov=clock --cov=core --cov-report=term
+      - run: pytest tests/integration/ -v --tb=short
+        continue-on-error: true
+      - run: pytest tests/e2e/ -v --tb=short
+        continue-on-error: true
+
+  build:
+    needs: test
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install -r requirements.txt pyinstaller
+      - run: pyinstaller --onefile --windowed --name=TaskbarClock --icon=resources/icon.ico --add-data "resources;resources" app.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: TaskbarClock
+          path: dist/TaskbarClock.exe
+
+  release:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: TaskbarClock
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: TaskbarClock.exe
